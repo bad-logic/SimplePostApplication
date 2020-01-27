@@ -10,6 +10,8 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use("/images", express.static('images'));
+
 //  PARSING THE INCOMING JSON DATA
 app.use(parser.json());
 
