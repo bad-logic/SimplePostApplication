@@ -2,6 +2,7 @@ const { express, parser } = require('./config');
 const app = express();
 const feedRoutes = require('./routes/feed.routes');
 
+
 // SETTING THE HEADERS FOR CORS ERROR
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,7 +11,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use("/images", express.static('images'));
+// app.use("/images", express.static('images'));
 
 //  PARSING THE INCOMING JSON DATA
 app.use(parser.json());
