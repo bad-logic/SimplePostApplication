@@ -6,7 +6,33 @@ exports.getPosts = (req, res, next) => {
     PostModel.find({})
         .then(posts => {
             res.status(200).json({
+                message: 'posts fetched successfull!!!',
                 posts: posts
+            });
+        }).catch(err => {
+            if (!err.statusCode) {
+                err.statusCode = 500;
+            }
+            next(err);
+        });
+
+}
+
+exports.getPost = (req, res, next) => {
+
+    const id = req.params.id;
+    PostModel.findById(id)
+        .then(post => {
+            if (!post) {
+                const error = new Error('no post found');
+                error.statusCode = 404;
+                // return next(err);
+                throw error; // will be caught by the below catch block which will then call express error handling 
+                // middleware
+            }
+            res.status(200).json({
+                message: 'post found',
+                post: post
             });
         }).catch(err => {
             if (!err.statusCode) {

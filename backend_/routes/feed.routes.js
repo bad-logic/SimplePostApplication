@@ -16,4 +16,6 @@ router.route('/post')
         .isLength({ min: 5 }).withMessage(`'content' should be at least 5 characters long`)
     ], feedController.createPost);
 
+router.get('/post/:id', feedController.getPost);
+
 module.exports = router;
