@@ -47,6 +47,13 @@ exports.createPost = (req, res, next) => {
 
     const error = validationResult(req);
 
+    const image = req.file;
+
+    if (!image) {
+        const error = new Error('File Type not supported');
+        error.statusCode = 422;
+        throw error;
+    }
     if (!error.isEmpty()) {
         const error = new Error('validation failed');
         error.statusCode = 422;
@@ -60,7 +67,7 @@ exports.createPost = (req, res, next) => {
     let newPost = new PostModel({});
     newPost.title = req.body.title;
     newPost.content = req.body.content;
-    newPost.imageUrl = '/images/mask.jpeg';
+    newPost.imageUrl = "/" + image.path;
     newPost.creator = {
         name: 'Roshan',
     }
