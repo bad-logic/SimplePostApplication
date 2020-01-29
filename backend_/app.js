@@ -1,4 +1,4 @@
-const { express, parser, path, multer } = require('./config');
+const { express, parser, path, multer, morgan } = require('./config');
 const app = express();
 const feedRoutes = require('./routes/feed.routes');
 
@@ -47,7 +47,8 @@ const fileFilter = (req, file, cb) => {
 // REGISTERING THE IMAGE HANDLING MIDDLEWARE
 app.use(multer({ fileFilter: fileFilter, storage: fileStorage }).single('image'));
 
-
+// USING MIDDLEWARE TO OUTPUT THE ENDPOINTS LOG
+app.use(morgan('dev'));
 // ROUTES
 app.use('/feed', feedRoutes);
 

@@ -16,6 +16,16 @@ router.route('/post')
         .isLength({ min: 5 }).withMessage(`'content' should be at least 5 characters long`)
     ], feedController.createPost);
 
-router.get('/post/:id', feedController.getPost);
+router.route('/post/:id')
+    .get(feedController.getPost)
+    .put([
+            body('title')
+            .trim()
+            .isLength({ min: 5 }).withMessage(`'title' should be at least 5 characters long`),
+            body('content')
+            .trim()
+            .isLength({ min: 5 }).withMessage(`'content' should be at least 5 characters long`)
+        ],
+        feedController.editPost);
 
 module.exports = router;
