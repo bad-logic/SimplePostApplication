@@ -2,15 +2,29 @@ const { validationResult } = require('./../config');
 const PostModel = require('./../models/post.model');
 const { file, path } = require('./../config');
 
+const POST_PER_PAGE = 2;
+
 exports.getPosts = (req, res, next) => {
 
-    PostModel.find({})
+    const currentPage = req.query.page || 1;
+    let totalItems;
+    PostModel
+        .find()
+        .countDocuments()
+        .then(count => {
+            totalItems = count;
+            return PostModel.find()
+                .skip((currentPage - 1) * POST_PER_PAGE)
+                .limit(POST_PER_PAGE);
+        })
         .then(posts => {
             res.status(200).json({
                 message: 'posts fetched successfull!!!',
-                posts: posts
+                posts: posts,
+                totalItems: totalItems
             });
-        }).catch(err => {
+        })
+        .catch(err => {
             if (!err.statusCode) {
                 err.statusCode = 500;
             }
