@@ -50,7 +50,7 @@ class Feed extends Component {
             page--;
             this.setState({ postPage: page });
         }
-        fetch('http://localhost:8000/feed/post')
+        fetch(`http://localhost:8000/feed/post?page=${page}`)
             .then(res => {
                 if (res.status !== 200) {
                     throw new Error('Failed to fetch posts.');
