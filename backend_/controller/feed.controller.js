@@ -148,9 +148,31 @@ exports.editPost = (req, res, next) => {
             next(err);
         });
 
-
 }
 
+exports.deletePost = (req, res, next) => {
+    const id = req.params.id;
+    PostModel.findById(id).then(post => {
+            if (!post) {
+                const error = new Error('no post found');
+                error.status = 404;
+                throw error;
+            }
+            //check logged in user
+            clearImage(post.imageUrl);
+            return PostModel.findByIdAndRemove(id);
+        }).then(response => {
+            res.status(200).json({
+                message: 'Post deleted successfully!!!'
+            });
+        })
+        .catch(err => {
+            if (!err.statusCode) {
+                err.statusCode = 500;
+            }
+            next(err);
+        });
+}
 
 const clearImage = filePath => {
 

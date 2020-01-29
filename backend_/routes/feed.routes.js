@@ -26,6 +26,7 @@ router.route('/post/:id')
             .trim()
             .isLength({ min: 5 }).withMessage(`'content' should be at least 5 characters long`)
         ],
-        feedController.editPost);
+        feedController.editPost)
+    .delete(feedController.deletePost);
 
 module.exports = router;
