@@ -143,15 +143,25 @@ exports.editPost = (req, res, next) => {
         throw error;
     }
 
-    const id = req.params.id;
+    const postId = req.params.id;
 
-    Post.findById(id)
+    Post.findById(postId)
         .then(post => {
+
+            //  CHECKING IF NO POST WITH THAT POSTID
             if (!post) {
                 const error = new Error('no post found');
                 error.statusCode = 404;
                 throw error;
             }
+
+            // CHECKING IF THE POST IS CREATED BY THE LOGGED IN USER
+            if (post.creator.toString() !== req.userId.toString()) {
+                const error = new Error('Not authorised');
+                error.statusCode = 403;
+                throw error;
+            }
+
             // CASE WHERE NEW IMAGE IS UPLOADED, WE NEED TO DELETE THE OLD IMAGE FROM FILESYSTEM
             if (post.imageUrl !== newImagePath) {
                 clearImage(post.imageUrl);
@@ -178,6 +188,7 @@ exports.editPost = (req, res, next) => {
 }
 
 exports.deletePost = (req, res, next) => {
+
     const id = req.params.id;
     Post.findById(id).then(post => {
             if (!post) {
@@ -185,7 +196,14 @@ exports.deletePost = (req, res, next) => {
                 error.status = 404;
                 throw error;
             }
-            //check logged in user
+
+            // CHECKING IF THE POST IS CREATED BY THE LOGGED IN USER
+            if (post.creator.toString() !== req.userId.toString()) {
+                const error = new Error('Not authorised');
+                error.statusCode = 403;
+                throw error;
+            }
+
             clearImage(post.imageUrl);
             return Post.findByIdAndRemove(id);
         }).then(response => {
@@ -199,6 +217,7 @@ exports.deletePost = (req, res, next) => {
             }
             next(err);
         });
+
 }
 
 const clearImage = filePath => {

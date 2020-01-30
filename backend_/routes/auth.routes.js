@@ -9,11 +9,12 @@ const authController = require('./../controller/auth.controller');
 router.put('/signup', [
     body('email').isEmail().withMessage('please enter a valid email')
     .custom((value, { req }) => {
-        return User.findByEmail(value).then(user => {
-            return Promise.reject('email address already exists'); // will be stored as error of validation
-        }).catch(err => {
-            return Promise.resolve(err); // handling error from user model so that it does not store as error of validation
-        });
+        return User.findOne({ email: value })
+            .then(user => {
+                if (user) {
+                    return Promise.reject('email address already exists'); // will be stored as error of validation
+                }
+            });
     }),
     body('password').trim().isLength({ min: 5 }).isAlphanumeric().withMessage('password should be at least 5 characters long and should contain numbers and letters'),
     body('name').trim().not().isEmpty().withMessage('Please provide name')
