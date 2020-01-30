@@ -19,5 +19,9 @@ router.put('/signup', [
     body('name').trim().not().isEmpty().withMessage('Please provide name')
 ], authController.register);
 
+router.post('/login', [
+    body('email').isEmail().withMessage('Enter valid email address'),
+    body('password').trim().not().isEmpty().withMessage('Password cannot be empty')
+], authController.login);
 
 module.exports = router;

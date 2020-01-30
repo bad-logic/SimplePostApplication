@@ -6,6 +6,7 @@ const path = require('path');
 const file = require('fs');
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { check, body, validationResult } = require('express-validator');
 require('dotenv').config();
 
@@ -26,6 +27,7 @@ module.exports = {
     validationResult,
     morgan,
     bcrypt,
+    jwt,
     mongoose,
     DB_NAME,
     DB_PORT
