@@ -1,5 +1,6 @@
 const { mongoose, bcrypt } = require('./../config');
 const Schema = mongoose.Schema;
+const secretKey = 'lkd45j564%[^%s]l%f@#$%^%$le)wrjd(f$#%{}khgk';
 
 const userSchema = new Schema({
     name: {
@@ -59,29 +60,42 @@ userSchema.statics.findByEmail = function(email) {
 
 }
 
+userSchema.statics.getJWT = function() {
+
+    return {
+        signature_key: secretKey
+    }
+
+}
+
+
 userSchema.statics.MatchByCredentials = function(email, password) {
 
     let user = this;
     return new Promise((resolve, reject) => {
-        user.findOne({ email: email }).then(data => {
-            if (!data) {
-                throw new Error('no such email exists in our database');
-            }
-            bcrypt.compare(password, data.password)
-                .then(doMatch => {
-                    if (doMatch) {
-                        resolve(data);
-                    } else {
-                        throw new Error('password is incorrect');
-                    }
-                })
-                .catch(err => {
-                    throw new Error(err);
-                });
-
-        }).catch(err => {
-            reject(err);
-        });
+        let validUser;
+        user.findOne({ email: email })
+            .then(data => {
+                if (!data) {
+                    const error = new Error('no such email exists in our database');
+                    error.statusCode = 401;
+                    throw error;
+                }
+                validUser = data;
+                return bcrypt.compare(password, data.password);
+            })
+            .then(doMatch => {
+                if (doMatch) {
+                    resolve(validUser);
+                } else {
+                    const error = new Error('password is incorrect');
+                    error.statusCode = 401;
+                    throw error;
+                }
+            })
+            .catch(err => {
+                reject(err);
+            });
     });
 
 }
