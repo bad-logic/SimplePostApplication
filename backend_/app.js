@@ -1,7 +1,7 @@
 const { express, parser, path, multer, morgan } = require('./config');
 const app = express();
 const feedRoutes = require('./routes/feed.routes');
-
+const authRoutes = require('./routes/auth.routes');
 
 // SETTING THE HEADERS FOR CORS ERROR
 app.use((req, res, next) => {
@@ -51,6 +51,7 @@ app.use(multer({ fileFilter: fileFilter, storage: fileStorage }).single('image')
 app.use(morgan('dev'));
 // ROUTES
 app.use('/feed', feedRoutes);
+app.use('/auth', authRoutes);
 
 
 // ERROR HANDLING MIDDLEWARE
@@ -58,8 +59,9 @@ app.use((err, req, res, next) => {
 
     console.log("error>>", err);
     const status = err.statusCode || 500;
-    const message = err.message
-    res.status(status).json({ message: message });
+    const message = err.message;
+    const data = err.data;
+    res.status(status).json({ message: message, data: data });
 
 });
 
