@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const file = require('fs');
 const morgan = require('morgan');
+const bcrypt = require('bcryptjs');
 const { check, body, validationResult } = require('express-validator');
 require('dotenv').config();
 
@@ -24,6 +25,7 @@ module.exports = {
     multer,
     validationResult,
     morgan,
+    bcrypt,
     mongoose,
     DB_NAME,
     DB_PORT
