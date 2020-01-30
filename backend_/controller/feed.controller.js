@@ -189,8 +189,9 @@ exports.editPost = (req, res, next) => {
 
 exports.deletePost = (req, res, next) => {
 
-    const id = req.params.id;
-    Post.findById(id).then(post => {
+    const postId = req.params.id;
+    Post.findById(postId)
+        .then(post => {
             if (!post) {
                 const error = new Error('no post found');
                 error.status = 404;
@@ -205,8 +206,19 @@ exports.deletePost = (req, res, next) => {
             }
 
             clearImage(post.imageUrl);
-            return Post.findByIdAndRemove(id);
-        }).then(response => {
+            return Post.findByIdAndRemove(postId);
+
+        })
+        .then(response => {
+            // POST HAS BEEN DELETED SO REMOVE THE POSTID FROM THE USER MODEL
+            return User.findById(req.userId);
+        })
+        .then(user => {
+            // POSTID REMOVED FROM USER MODEL
+            user.posts.pull(postId);
+            return user.save();
+        })
+        .then(result => {
             res.status(200).json({
                 message: 'Post deleted successfully!!!'
             });
