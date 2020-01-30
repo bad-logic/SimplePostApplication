@@ -1,6 +1,7 @@
 const { validationResult } = require('./../config');
-const PostModel = require('./../models/post.model');
+const Post = require('./../models/post.model');
 const { file, path } = require('./../config');
+const User = require('./../models/user.model');
 
 const POST_PER_PAGE = 2;
 
@@ -8,12 +9,11 @@ exports.getPosts = (req, res, next) => {
 
     const currentPage = req.query.page || 1;
     let totalItems;
-    PostModel
-        .find()
+    Post.find()
         .countDocuments()
         .then(count => {
             totalItems = count;
-            return PostModel.find()
+            return Post.find()
                 .skip((currentPage - 1) * POST_PER_PAGE)
                 .limit(POST_PER_PAGE);
         })
@@ -36,7 +36,7 @@ exports.getPosts = (req, res, next) => {
 exports.getPost = (req, res, next) => {
 
     const id = req.params.id;
-    PostModel.findById(id)
+    Post.findById(id)
         .then(post => {
             if (!post) {
                 const error = new Error('no post found');
@@ -79,19 +79,32 @@ exports.createPost = (req, res, next) => {
         // });
     }
 
-    let newPost = new PostModel({});
+    let newPost = new Post({});
     newPost.title = req.body.title;
     newPost.content = req.body.content;
     newPost.imageUrl = "/" + image.path;
-    newPost.creator = {
-        name: 'Roshan',
-    }
+    newPost.creator = req.userId;
+
+    let creator;
 
     newPost.save()
         .then(result => {
+            return User.findById(req.userId);
+        })
+        .then(user => {
+            // logged in user info in user
+            creator = user;
+            user.posts.push(newPost); // mongoose will automatically extract and store the id
+            return user.save();
+        })
+        .then(done => {
             res.status(201).json({
                 message: 'post created successfully!!!',
-                post: result
+                post: newPost,
+                creator: {
+                    _id: creator._id,
+                    name: creator.name
+                }
             });
         })
         .catch(err => {
@@ -132,7 +145,7 @@ exports.editPost = (req, res, next) => {
 
     const id = req.params.id;
 
-    PostModel.findById(id)
+    Post.findById(id)
         .then(post => {
             if (!post) {
                 const error = new Error('no post found');
@@ -166,7 +179,7 @@ exports.editPost = (req, res, next) => {
 
 exports.deletePost = (req, res, next) => {
     const id = req.params.id;
-    PostModel.findById(id).then(post => {
+    Post.findById(id).then(post => {
             if (!post) {
                 const error = new Error('no post found');
                 error.status = 404;
@@ -174,7 +187,7 @@ exports.deletePost = (req, res, next) => {
             }
             //check logged in user
             clearImage(post.imageUrl);
-            return PostModel.findByIdAndRemove(id);
+            return Post.findByIdAndRemove(id);
         }).then(response => {
             res.status(200).json({
                 message: 'Post deleted successfully!!!'
