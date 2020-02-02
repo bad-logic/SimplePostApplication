@@ -1,7 +1,7 @@
 const User = require('./../models/user.model');
 const { validationResult, jwt } = require('./../config');
 
-exports.register = (req, res, next) => {
+exports.register = async(req, res, next) => {
     console.log("req body>>", req.body);
 
     const errors = validationResult(req);
@@ -10,7 +10,7 @@ exports.register = (req, res, next) => {
         const error = new Error('validation failed');
         error.statusCode = 422;
         error.data = errors.array();
-        throw error;
+        next(error);
     }
 
     const newUser = new User({
@@ -19,48 +19,46 @@ exports.register = (req, res, next) => {
         password: req.body.password
     });
 
-    newUser.save()
-        .then(done => {
-            res.status(201).json({ message: 'user created successfully!!!', userId: done._id });
-        })
-        .catch(err => {
-            if (!err.statusCode) {
-                err.statusCode = 500;
-            }
-            next(err);
-        });
+    try {
+        const done = await newUser.save();
+        res.status(201).json({ message: 'user created successfully!!!', userId: done._id });
+
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
 
 }
 
-exports.login = (req, res, next) => {
+exports.login = async(req, res, next) => {
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = new Error('validation failed');
         error.statusCode = 422;
         error.data = errors.array();
-        throw error;
+        next(error);
     }
 
-    User.MatchByCredentials(req.body.email, req.body.password)
-        .then(done => {
-
-            const token = jwt.sign({
-                email: done.email,
-                userId: done._id.toString()
-            }, User.getJWT().signature_key, { expiresIn: '1h' });
-
-            res.status(200).json({
-                message: 'login successfull',
-                token: token,
-                userId: done._id.toString()
-            });
-        })
-        .catch(err => {
-            if (!err.statusCode) {
-                err.statusCode = 500;
-            }
-            next(err);
+    try {
+        const user = await User.MatchByCredentials(req.body.email, req.body.password);
+        const token = jwt.sign({
+            email: user.email,
+            userId: user._id.toString()
+        }, User.getJWT().signature_key, { expiresIn: '1h' });
+        res.status(200).json({
+            message: 'login successfull',
+            token: token,
+            userId: user._id.toString()
         });
+
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
 
 }
