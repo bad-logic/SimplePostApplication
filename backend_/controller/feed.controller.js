@@ -2,13 +2,13 @@ const { validationResult } = require('./../config');
 const Post = require('./../models/post.model');
 const { file, path } = require('./../config');
 const User = require('./../models/user.model');
+const io = require('./../socket');
 
 const POST_PER_PAGE = 2;
 
 exports.getPosts = async(req, res, next) => {
 
     const currentPage = req.query.page || 1;
-    let totalItems;
 
     // USING ASYNC AWAIT
     try {
@@ -16,8 +16,11 @@ exports.getPosts = async(req, res, next) => {
         // where you can use then/catch or async/await
         // you can return a real promise by chaining  .exec after mongoose operations
         const totalItems = await Post.find().countDocuments().exec();
-        const posts = await Post.find().populate('creator')
-            .skip((currentPage - 1) * POST_PER_PAGE).limit(POST_PER_PAGE).exec();
+        const posts = await Post.find()
+            .populate('creator')
+            .sort({ createdAt: -1 })
+            .skip((currentPage - 1) * POST_PER_PAGE)
+            .limit(POST_PER_PAGE).exec();
         res.status(200).json({
             message: 'posts fetched successfull!!!',
             posts: posts,
@@ -31,6 +34,7 @@ exports.getPosts = async(req, res, next) => {
     }
 
     // USING PROMISE
+    // let totalItems;
     // Post.find()
     //     .countDocuments()
     //     .then(count => {
@@ -106,10 +110,22 @@ exports.createPost = async(req, res, next) => {
 
     // USING ASYNC/AWAIT
     try {
-        const result = await newPost.save();
+        await newPost.save();
         const user = await User.findById(req.userId);
         user.posts.push(newPost);
-        const done = await user.save();
+        await user.save();
+        // .emit sends to all connected clients
+        // .broadcast sends to all connected clients except the one from which event was triggered
+        io.getIO().emit('posts', {
+            action: 'create',
+            post: {
+                ...newPost._doc,
+                creator: {
+                    _id: req.userId,
+                    name: user.name
+                }
+            }
+        });
         res.status(201).json({
             message: 'post created successfully!!!',
             post: newPost,
@@ -185,7 +201,7 @@ exports.editPost = async(req, res, next) => {
 
     const postId = req.params.id;
     try {
-        const post = await Post.findById(postId);
+        const post = await Post.findById(postId).populate('creator');
         if (!post) {
             const error = new Error('no post found');
             error.statusCode = 404;
@@ -193,7 +209,7 @@ exports.editPost = async(req, res, next) => {
         }
 
         // CHECKING IF THE POST IS CREATED BY THE LOGGED IN USER
-        if (post.creator.toString() !== req.userId.toString()) {
+        if (post.creator._id.toString() !== req.userId.toString()) {
             const error = new Error('Not authorised');
             error.statusCode = 403;
             throw error;
@@ -207,6 +223,10 @@ exports.editPost = async(req, res, next) => {
         post.content = req.body.content;
         post.imageUrl = newImagePath;
         const response = await post.save();
+        io.getIO().emit('posts', {
+            action: 'update',
+            post: response
+        });
         res.status(200).json({
             message: 'post updated successfully!!!',
             post: response
@@ -284,6 +304,11 @@ exports.deletePost = async(req, res, next) => {
         const user = await User.findById(req.userId);
         user.posts.pull(postId); // removing post id reference from user 
         await user.save();
+        io.getIO().emit('posts', {
+            action: 'delete',
+            post: postId
+        });
+
         res.status(200).json({
             message: 'Post deleted successfully!!!'
         });
