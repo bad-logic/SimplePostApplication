@@ -7,6 +7,7 @@ const file = require('fs');
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const socket = require('socket.io');
 const { check, body, validationResult } = require('express-validator');
 require('dotenv').config();
 
@@ -26,6 +27,7 @@ module.exports = {
     multer,
     validationResult,
     morgan,
+    socket,
     bcrypt,
     jwt,
     mongoose,

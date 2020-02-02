@@ -6,6 +6,8 @@ const User = require('./../models/user.model');
 
 const authController = require('./../controller/auth.controller');
 
+const isAuthenticated = require('./../middleware/isAuth');
+
 router.put('/signup', [
     body('email').isEmail().withMessage('please enter a valid email')
     .custom((value, { req }) => {
@@ -24,5 +26,18 @@ router.post('/login', [
     body('email').isEmail().withMessage('Enter valid email address'),
     body('password').trim().not().isEmpty().withMessage('Password cannot be empty')
 ], authController.login);
+
+router.get('/status', isAuthenticated, authController.getUserStatus);
+
+router.patch('/status',
+    isAuthenticated, [
+        body('status')
+        .trim()
+        .not()
+        .isEmpty()
+    ],
+    authController.updateUserStatus
+);
+
 
 module.exports = router;
