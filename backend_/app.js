@@ -4,10 +4,18 @@ const graphQlSchema = require('./graphql/schema');
 const graphQlResolver = require('./graphql/resolvers');
 
 // SETTING THE HEADERS FOR CORS ERROR
+// IN CASE OF GRAPHQL express-graphql, it rejects any request other than POST
+// AND BROWSER AUTOMATICALLY SENDS OPTIONS REQUEST FIRST TO CHECK IF OTHER 
+// REQUESTS ARE ALLOWED WHICH IS THEN REJECTED BY expresss-graphql
+// SO WE MUST ALLOW THE OPTIONS REQUEST
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'OPTIONS,GET,POST,PUT,PATCH,DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, api_key');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200); // now the following next() is not executed and OPTIONS request doesnot reach the
+        // express-graphql which automatically rejects methods other than POST request
+    }
     next();
 });
 
@@ -52,7 +60,22 @@ app.use(morgan('dev'));
 
 app.use('/graphql', exGraphQl({
     schema: graphQlSchema,
-    rootValue: graphQlResolver
+    rootValue: graphQlResolver,
+    // for sending detailed information about errors
+    customFormatErrorFn(err) { // receives error detected by graphql
+        if (!err.originalError) { // set by express-graphql when it detects an error is thrown by us or 3rd party middlewares
+            return err;
+        }
+        const data = err.originalError.data;
+        const code = err.originalError.statusCode || 500;
+        const message = err.message || 'An error Occurred!!!';
+        return {
+            message: message,
+            status: code,
+            data: data
+        };
+    },
+    graphiql: true // to view the graphiql browser tool we use '.use' instead of '.post' becoz browser only sends get request
 }));
 
 // ERROR HANDLING MIDDLEWARE
