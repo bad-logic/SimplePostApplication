@@ -2,7 +2,6 @@ const { validationResult } = require('./../config');
 const Post = require('./../models/post.model');
 const { file, path } = require('./../config');
 const User = require('./../models/user.model');
-const io = require('./../socket');
 
 const POST_PER_PAGE = 2;
 
@@ -32,30 +31,6 @@ exports.getPosts = async(req, res, next) => {
         }
         next(err);
     }
-
-    // USING PROMISE
-    // let totalItems;
-    // Post.find()
-    //     .countDocuments()
-    //     .then(count => {
-    //         totalItems = count;
-    //         return Post.find()
-    //             .skip((currentPage - 1) * POST_PER_PAGE)
-    //             .limit(POST_PER_PAGE);
-    //     })
-    //     .then(posts => {
-    //         res.status(200).json({
-    //             message: 'posts fetched successfull!!!',
-    //             posts: posts,
-    //             totalItems: totalItems
-    //         });
-    //     })
-    //     .catch(err => {
-    //         if (!err.statusCode) {
-    //             err.statusCode = 500;
-    //         }
-    //         next(err);
-    //     });
 
 }
 
@@ -116,16 +91,16 @@ exports.createPost = async(req, res, next) => {
         await user.save();
         // .emit sends to all connected clients
         // .broadcast sends to all connected clients except the one from which event was triggered
-        io.getIO().emit('posts', {
-            action: 'create',
-            post: {
-                ...newPost._doc,
-                creator: {
-                    _id: req.userId,
-                    name: user.name
-                }
-            }
-        });
+        // io.getIO().emit('posts', {
+        //     action: 'create',
+        //     post: {
+        //         ...newPost._doc,
+        //         creator: {
+        //             _id: req.userId,
+        //             name: user.name
+        //         }
+        //     }
+        // });
         res.status(201).json({
             message: 'post created successfully!!!',
             post: newPost,
@@ -141,34 +116,6 @@ exports.createPost = async(req, res, next) => {
         }
         next(err);
     }
-    // USING PROMISE
-    // let creator;
-    // newPost.save()
-    //     .then(result => {
-    //         return User.findById(req.userId);
-    //     })
-    //     .then(user => {
-    //         // logged in user info in user
-    //         creator = user;
-    //         user.posts.push(newPost); // mongoose will automatically extract and store the id
-    //         return user.save();
-    //     })
-    //     .then(done => {
-    //         res.status(201).json({
-    //             message: 'post created successfully!!!',
-    //             post: newPost,
-    //             creator: {
-    //                 _id: creator._id,
-    //                 name: creator.name
-    //             }
-    //         });
-    //     })
-    //     .catch(err => {
-    //         if (!err.statusCode) {
-    //             err.statusCode = 500;
-    //         }
-    //         next(err); // will be caught by express general error handler middleware
-    //     });
 
 }
 
@@ -184,7 +131,6 @@ exports.editPost = async(req, res, next) => {
     }
 
     const image = req.file;
-
 
     // if new image is not provided, old image path will be sent in image field from the react app 
     let newImagePath = req.body.image; //old imageUrl
@@ -223,10 +169,10 @@ exports.editPost = async(req, res, next) => {
         post.content = req.body.content;
         post.imageUrl = newImagePath;
         const response = await post.save();
-        io.getIO().emit('posts', {
-            action: 'update',
-            post: response
-        });
+        // io.getIO().emit('posts', {
+        //     action: 'update',
+        //     post: response
+        // });
         res.status(200).json({
             message: 'post updated successfully!!!',
             post: response
@@ -237,47 +183,6 @@ exports.editPost = async(req, res, next) => {
         }
         next(err);
     }
-
-    // USING PROMISE
-    // Post.findById(postId)
-    //     .then(post => {
-
-    //         //  CHECKING IF NO POST WITH THAT POSTID
-    //         if (!post) {
-    //             const error = new Error('no post found');
-    //             error.statusCode = 404;
-    //             throw error;
-    //         }
-
-    //         // CHECKING IF THE POST IS CREATED BY THE LOGGED IN USER
-    //         if (post.creator.toString() !== req.userId.toString()) {
-    //             const error = new Error('Not authorised');
-    //             error.statusCode = 403;
-    //             throw error;
-    //         }
-
-    //         // CASE WHERE NEW IMAGE IS UPLOADED, WE NEED TO DELETE THE OLD IMAGE FROM FILESYSTEM
-    //         if (post.imageUrl !== newImagePath) {
-    //             clearImage(post.imageUrl);
-    //         }
-    //         post.title = req.body.title;
-    //         post.content = req.body.content;
-    //         post.imageUrl = newImagePath;
-
-    //         return post.save();
-    //     })
-    //     .then(response => {
-    //         res.status(200).json({
-    //             message: 'post updated successfully!!!',
-    //             post: response
-    //         });
-    //     })
-    //     .catch(err => {
-    //         if (!err.statusCode) {
-    //             err.statusCode = 500;
-    //         }
-    //         next(err);
-    //     });
 
 }
 
@@ -304,15 +209,14 @@ exports.deletePost = async(req, res, next) => {
         const user = await User.findById(req.userId);
         user.posts.pull(postId); // removing post id reference from user 
         await user.save();
-        io.getIO().emit('posts', {
-            action: 'delete',
-            post: postId
-        });
+        // io.getIO().emit('posts', {
+        //     action: 'delete',
+        //     post: postId
+        // });
 
         res.status(200).json({
             message: 'Post deleted successfully!!!'
         });
-
 
     } catch (err) {
         if (!err.statusCode) {
@@ -320,47 +224,6 @@ exports.deletePost = async(req, res, next) => {
         }
         next(err);
     }
-
-    // USING PROMISE
-    // Post.findById(postId)
-    //     .then(post => {
-    //         if (!post) {
-    //             const error = new Error('no post found');
-    //             error.status = 404;
-    //             throw error;
-    //         }
-
-    //         // CHECKING IF THE POST IS CREATED BY THE LOGGED IN USER
-    //         if (post.creator.toString() !== req.userId.toString()) {
-    //             const error = new Error('Not authorised');
-    //             error.statusCode = 403;
-    //             throw error;
-    //         }
-
-    //         clearImage(post.imageUrl);
-    //         return Post.findByIdAndRemove(postId);
-
-    //     })
-    //     .then(response => {
-    //         // POST HAS BEEN DELETED SO REMOVE THE POSTID FROM THE USER MODEL
-    //         return User.findById(req.userId);
-    //     })
-    //     .then(user => {
-    //         // POSTID REMOVED FROM USER MODEL
-    //         user.posts.pull(postId);
-    //         return user.save();
-    //     })
-    //     .then(result => {
-    //         res.status(200).json({
-    //             message: 'Post deleted successfully!!!'
-    //         });
-    //     })
-    //     .catch(err => {
-    //         if (!err.statusCode) {
-    //             err.statusCode = 500;
-    //         }
-    //         next(err);
-    //     });
 
 }
 
@@ -372,4 +235,5 @@ const clearImage = filePath => {
             console.log("error deleting the file");
         }
     });
+
 }

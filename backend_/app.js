@@ -1,7 +1,7 @@
-const { express, parser, path, multer, morgan } = require('./config');
+const { express, parser, path, multer, morgan, exGraphQl } = require('./config');
 const app = express();
-const feedRoutes = require('./routes/feed.routes');
-const authRoutes = require('./routes/auth.routes');
+const graphQlSchema = require('./graphql/schema');
+const graphQlResolver = require('./graphql/resolvers');
 
 // SETTING THE HEADERS FOR CORS ERROR
 app.use((req, res, next) => {
@@ -49,10 +49,11 @@ app.use(multer({ fileFilter: fileFilter, storage: fileStorage }).single('image')
 
 // USING MIDDLEWARE TO OUTPUT THE ENDPOINTS LOG
 app.use(morgan('dev'));
-// ROUTES
-app.use('/feed', feedRoutes);
-app.use('/auth', authRoutes);
 
+app.use('/graphql', exGraphQl({
+    schema: graphQlSchema,
+    rootValue: graphQlResolver
+}));
 
 // ERROR HANDLING MIDDLEWARE
 app.use((err, req, res, next) => {
