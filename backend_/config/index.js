@@ -7,8 +7,9 @@ const file = require('fs');
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const socket = require('socket.io');
 const { check, body, validationResult } = require('express-validator');
+const exGraphQl = require('express-graphql');
+
 require('dotenv').config();
 
 const PORT = process.env.PORT || 8000;
@@ -27,9 +28,9 @@ module.exports = {
     multer,
     validationResult,
     morgan,
-    socket,
     bcrypt,
     jwt,
+    exGraphQl,
     mongoose,
     DB_NAME,
     DB_PORT
