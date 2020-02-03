@@ -7,7 +7,7 @@ const file = require('fs');
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { check, body, validationResult } = require('express-validator');
+const validator = require('validator');
 const exGraphQl = require('express-graphql');
 
 require('dotenv').config();
@@ -21,12 +21,10 @@ module.exports = {
     HOST,
     express,
     parser,
-    check,
-    body,
+    validator,
     file,
     path,
     multer,
-    validationResult,
     morgan,
     bcrypt,
     jwt,

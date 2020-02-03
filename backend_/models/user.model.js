@@ -44,22 +44,6 @@ userSchema.pre('save', function(next) {
 
 });
 
-// userSchema.statics.findByEmail = function(email) {
-
-//     let user = this;
-//     return new Promise((resolve, reject) => {
-//         user.findOne({ email: email }).then(data => {
-//             if (!data) {
-//                 throw new Error('no such email exists in our database');
-//             }
-//             resolve(data);
-//         }).catch(err => {
-//             reject(err);
-//         });
-//     });
-
-// }
-
 userSchema.statics.getJWT = function() {
 
     return {
