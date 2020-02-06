@@ -9,7 +9,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const exGraphQl = require('express-graphql');
-
+const _ = require('lodash');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 8000;
@@ -23,6 +23,7 @@ module.exports = {
     parser,
     validator,
     file,
+    _,
     path,
     multer,
     morgan,

@@ -2,6 +2,8 @@ const { express, parser, path, multer, morgan, exGraphQl } = require('./config')
 const app = express();
 const graphQlSchema = require('./graphql/schema');
 const graphQlResolver = require('./graphql/resolvers');
+const isAuthenticated = require('./middleware/isAuth');
+const { clearImage } = require('./utils/file');
 
 // SETTING THE HEADERS FOR CORS ERROR
 // IN CASE OF GRAPHQL express-graphql, it rejects any request other than POST
@@ -57,6 +59,29 @@ app.use(multer({ fileFilter: fileFilter, storage: fileStorage }).single('image')
 
 // USING MIDDLEWARE TO OUTPUT THE ENDPOINTS LOG
 app.use(morgan('dev'));
+// MIDDLEWARE TO CHECK FOR USER AUTHENTICATION
+app.use(isAuthenticated);
+
+app.put('/post-image', (req, res, next) => {
+    if (!req.isAuth) {
+        // USER NOT AUTHENTICATED
+        const error = new Error('User not Authenticated');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    const image = req.file;
+    if (!image) {
+        return res.status(200).json({ message: 'no file provided' });
+    }
+
+    if (req.body.oldPath) {
+        console.log(req.body.oldPath);
+        clearImage(req.body.oldPath);
+    }
+    // at this point image has already been saved by the multer if image was valid
+    res.status(200).json({ message: 'file stored', path: image.path });
+});
 
 app.use('/graphql', exGraphQl({
     schema: graphQlSchema,
