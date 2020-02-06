@@ -7,9 +7,8 @@ module.exports = (req, res, next) => {
     const authToken = req.get('api_key');
 
     if (!authToken) {
-        const error = new Error('not authenticated');
-        error.statusCode = 401;
-        throw error;
+        req.isAuth = false;
+        return next();
     }
 
     const token = authToken.split(' ')[1];
@@ -19,14 +18,13 @@ module.exports = (req, res, next) => {
         decodedToken = jwt.verify(token, User.getJWT().signature_key);
     } catch (err) {
         //  FAILED DUE TO TECHNICAL ERROR
-        err.statusCode = 500;
-        throw err;
+        req.isAuth = false;
+        return next();
     }
     // WORKED BUT INVALID TOKEN
     if (!decodedToken) {
-        const error = new Error('not authenticated');
-        error.statusCode = 401;
-        throw error;
+        req.isAuth = false;
+        return next();
     }
     // VALID TOKEN
 
@@ -37,20 +35,18 @@ module.exports = (req, res, next) => {
             // VALID TOKEN
             if (!user) {
                 // USER DELETED/NOT IN THE SYSTEM
-                const error = new Error('not authenticated');
-                error.statusCode = 401;
-                throw error;
+                req.isAuth = false;
+                return next();
             } else {
                 // USER EXISTS IN THE SYSTEM
+                req.isAuth = true;
                 req.userId = user._id;
                 next();
             }
         })
         .catch(err => {
-            if (!err.statusCode) {
-                err.statusCode = 500;
-            }
-            next(err);
+            req.isAuth = false;
+            return next();
         });
 
 }

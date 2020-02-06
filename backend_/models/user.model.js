@@ -1,4 +1,4 @@
-const { mongoose, bcrypt } = require('./../config');
+const { mongoose, bcrypt, _ } = require('./../config');
 const Schema = mongoose.Schema;
 const secretKey = 'lkd45j564%[^%s]l%f@#$%^%$le)wrjd(f$#%{}khgk';
 
@@ -25,6 +25,15 @@ const userSchema = new Schema({
     }]
 }, { timestamps: true });
 
+// *** INSTANCE METHODS ***
+
+userSchema.methods.toJSON = function() {
+    const user = this;
+    const userObject = user.toObject();
+
+    // return the document except the password and sessions(they should not be made available)
+    return _.omit(userObject, 'password');
+}
 
 userSchema.pre('save', function(next) {
 
