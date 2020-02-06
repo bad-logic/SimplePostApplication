@@ -64,13 +64,16 @@ class Feed extends Component {
             this.setState({ postPage: page });
         }
         const gQuery = {
-            query: `{
-                getPosts(page:${page}){
-                  posts{_id title content imageUrl creator{name} createdAt}
-                  totalPosts
-                }
-              }
-            `
+            query: `
+                query FetchPosts($Cpage:Int){
+                    getPosts(page:$Cpage){
+                      posts{_id title content imageUrl creator{name} createdAt}
+                      totalPosts
+                    }
+              }`,
+            variables: {
+                Cpage: page
+            }
         };
         fetch(`http://localhost:8000/graphql`, {
                 method: "POST",
@@ -104,9 +107,12 @@ class Feed extends Component {
     statusUpdateHandler = event => {
         event.preventDefault();
         const gQuery = {
-            query: `mutation{
-                updateStatus(status:"${this.state.status}"){status}
-            }`
+            query: `mutation UpdateUserStatus($userStatus:String!){
+                updateStatus(status:$userStatus){status}
+            }`,
+            variables: {
+                userStatus: this.state.status
+            }
         }
         fetch('http://localhost:8000/graphql', {
                 method: 'POST',
@@ -167,14 +173,14 @@ class Feed extends Component {
             })
             .then(res => res.json())
             .then(resData => {
-                const imageUrl = resData.path;
+                const imageUrl = resData.path || 'undefined';
                 let gQuery = {
                     query: `
-                mutation{
+                mutation AddPost($title:String!,$content:String!,$imageUrl:String!){
                     createPost(postInput:{
-                        title:"${postData.title}",
-                        content:"${postData.content}",
-                        imageUrl:"${imageUrl}"
+                        title:$title,
+                        content:$content,
+                        imageUrl:$imageUrl
                     }){
                         _id
                         title
@@ -183,16 +189,21 @@ class Feed extends Component {
                         creator{name}
                         createdAt
                     }
-                }`
+                }`,
+                    variables: {
+                        title: postData.title,
+                        content: postData.content,
+                        imageUrl: imageUrl
+                    }
                 };
                 if (this.state.editPost) {
                     gQuery = {
                         query: `
-                    mutation{
-                        updatePost(id:"${this.state.editPost._id}",postInput:{
-                            title:"${postData.title}",
-                            content:"${postData.content}",
-                            imageUrl:"${imageUrl}"
+                    mutation EditPost($postId:ID!,$title:String!,$content:String!,$imageUrl:String!){
+                        updatePost(id:$postId,postInput:{
+                            title:$title,
+                            content:$content,
+                            imageUrl:$imageUrl
                         }){
                             _id
                             title
@@ -201,7 +212,13 @@ class Feed extends Component {
                             creator{name}
                             createdAt
                         }
-                    }`
+                    }`,
+                        variables: {
+                            postId: this.state.editPost._id,
+                            title: postData.title,
+                            content: postData.content,
+                            imageUrl: imageUrl
+                        }
                     }
                 }
                 return fetch('http://localhost:8000/graphql', {
@@ -273,9 +290,14 @@ class Feed extends Component {
 
     deletePostHandler = postId => {
         this.setState({ postsLoading: true });
-        let gQuery = { query: `mutation{
-            deletePost(id:"${postId}")
-        }` };
+        let gQuery = {
+            query: `mutation deletePost($postId:ID!){
+            deletePost(id:$postId)
+        }`,
+            variables: {
+                postId: postId
+            }
+        };
         fetch(`http://localhost:8000/graphql`, {
                 method: 'POST',
                 headers: {

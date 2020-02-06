@@ -62,15 +62,19 @@
             this.setState({ authLoading: true });
             const gQuery = {
                 query: `
-                {
+                query userLogin($email:String!,$password:String!){
                     login(
-                        email: "${authData.email}",
-                        password: "${authData.password}"
+                        email: $email,
+                        password: $password
                     ){
                         token
                         userId
                     }
-                  }`
+                  }`,
+                variables: {
+                    email: authData.email,
+                    password: authData.password
+                }
             }
             fetch('http://localhost:8000/graphql', {
                     method: 'POST',
@@ -120,17 +124,22 @@
             this.setState({ authLoading: true });
             const gQuery = {
                 query: `
-                mutation {
+                mutation RegisterNewUser($email:String!,$name:String!,$password:String!){
                     createUser(userInput: {
-                        email: "${authData.signupForm.email.value}",
-                        name: "${authData.signupForm.name.value}",
-                        password: "${authData.signupForm.password.value}"
+                        email: $email,
+                        name: $name,
+                        password: $password
                     }){
                         _id
                         email
                     }
-                  }`
-            }
+                  }`,
+                variables: {
+                    email: authData.signupForm.email.value,
+                    name: authData.signupForm.name.value,
+                    password: authData.signupForm.password.value
+                }
+            };
             fetch('http://localhost:8000/graphql', {
                     method: 'POST',
                     headers: {
@@ -142,6 +151,7 @@
                     return res.json();
                 })
                 .then(resData => {
+                    console.log("resdata>>", resData);
                     if (resData.errors && resData.errors[0].status === 422) {
                         throw new Error(`Validation failed. Make sure the email address isn't used yet`);
                     }
