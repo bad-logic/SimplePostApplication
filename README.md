@@ -1,4 +1,4 @@
-#Simple Post App in React
-#MERN
-#JWT
-#REST-API => GRAPHQL
+# Simple Post App in React
+#### MERN
+#### JWT
+#### REST-API => GRAPHQL
